@@ -1,0 +1,40 @@
+Microsoft (R) Macro Assembler Version 14.28.29913.0	    04/06/21 16:57:51
+RemoveMe.asm						     Page 1 - 1
+
+
+
+				.data
+RemoveMe.asm(1) : error A2013:.MODEL must precede this directive
+				  intro_1   BYTE    "Welcome, "
+RemoveMe.asm(2) : error A2034:must be in segment block
+				  userName  BYTE    "Fred."
+RemoveMe.asm(3) : error A2034:must be in segment block
+				  intro_2   BYTE    "What’s up?"
+RemoveMe.asm(4) : error A2034:must be in segment block
+				  count     DWORD   0
+RemoveMe.asm(5) : error A2034:must be in segment block
+
+				    MOV   EDX, OFFSET intro_1
+RemoveMe.asm(7) : error A2034:must be in segment block
+				  CALL  WriteString
+RemoveMe.asm(8) : error A2034:must be in segment block
+				  CALL  CrLf
+RemoveMe.asm(9) : error A2034:must be in segment block
+				  MOV   EDX, OFFSET userName
+RemoveMe.asm(10) : error A2034:must be in segment block
+				  CALL  WriteString
+RemoveMe.asm(11) : error A2034:must be in segment block
+				  CALL  CrLf
+RemoveMe.asm(12) : error A2034:must be in segment block
+				  MOV   EDX, OFFSET intro_2
+RemoveMe.asm(13) : error A2034:must be in segment block
+				  CALL  WriteString
+RemoveMe.asm(14) : error A2034:must be in segment block
+				  CALL  CrLf
+Microsoft (R) Macro Assembler Version 14.28.29913.0	    04/06/21 16:57:51
+RemoveMe.asm						     Symbols 2 - 1
+
+
+
+	   0 Warnings
+	   15 Errors
