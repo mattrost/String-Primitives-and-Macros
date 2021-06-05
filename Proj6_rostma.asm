@@ -1,7 +1,7 @@
 TITLE String Primitives and Macros    (Proj6_rostma.asm)
 
 ; Author: Matthew Rost
-; Last Modified: 6/3/2021
+; Last Modified: 6/5/2021
 ; OSU email address: rostma@oregonstate.edu
 ; Course number/section:   CS271 Section 400
 ; Project Number:                 Due Date: 6/6/2021
@@ -39,13 +39,17 @@ ENDM
 
 ; mDisplayString based off of MacroDemo.asm from Module 8 - Exploration 2
 mDisplayString MACRO string
+	PUSH		EDX
 
 	MOV			EDX, string
 	CALL		WriteString
 
+	POP			EDX
+
 ENDM
 
-HI = 10
+HI = 32
+NUMBER = 10 ; Number of integers to store
 
 .data
 
@@ -57,12 +61,16 @@ HI = 10
 	input_prompt		BYTE		"Please enter a signed number: ", 0
 	input_bad			BYTE		"ERROR: You did not enter a signed number or your number was too big.", 0
 	input_try_again		BYTE		"Please try again: ", 0
-	integers			SDWORD		10 DUP(?)
+	integers			SDWORD		NUMBER DUP(?)
 	string				BYTE		33 DUP(0)
+	string_count		DWORD		?
 	count				DWORD		?
-
-
-; (insert variable definitions here)
+	output_string		BYTE		"You entered the following numbers: ", 0
+	average				DWORD		?
+	sum_string			BYTE		"The sum of these numbers is ", 0
+	sum					DWORD		?
+	rounded_string		BYTE		"The rounded average is: ", 0
+	goodbye				BYTE		"Thanks for playing!", 0
 
 .code
 main PROC
@@ -75,13 +83,12 @@ main PROC
 	PUSH			OFFSET assignment
 	CALL			Introduction
 
-
-	MOV				ECX, 10
-	MOV				count, 0
+	MOV				ECX, NUMBER
 
 	_getValidStrings:
 		; Loop to get valid integers
 		; call ReadVal
+		PUSH			OFFSET string_count
 		PUSH			OFFSET count
 		PUSH			OFFSET string
 		PUSH			OFFSET integers
@@ -91,6 +98,12 @@ main PROC
 		CALL			ReadVal
 		ADD				count, 4
 		LOOP			_getValidStrings
+
+	PUSH			OFFSET integers
+	PUSH			OFFSET sum
+	PUSH			OFFSET average
+	CALL			Calculate
+	
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -147,11 +160,13 @@ Introduction ENDP
 ;	FILL THIS OUT
 ;
 ; Receives:
-;	[ebp+8]			= 
-;	[ebp+12]		=  
-;	[ebp+16]		=  array
-;	[ebp+20]		=  array
-;	[ebp+24]		=  array
+;	[ebp+8]			=  input_prompt string BYTE array
+;	[ebp+12]		=  input_bad string BYTE array
+;	[ebp+16]		=  input_try_again string BYTE array
+;	[ebp+20]		=  integers DWORD array
+;	[ebp+24]		=  string (user string input) BYTE array
+;	[ebp+28]		=  count DWORD
+;	[ebp+32]		=  string_count (length of string input) DWORD
 ;
 ; Returns:
 ;	NONE
@@ -249,6 +264,7 @@ ReadVal PROC
 	_multiply:
 		MOV						EBX, 10
 		MUL						EBX
+		JO						_overflow
 		LOOP					_multiply
 		JMP						_addDigit
 
@@ -269,12 +285,14 @@ ReadVal PROC
 	_multiplyNegative:
 		MOV						EBX, 10
 		MUL						EBX
+		JO						_badString
 		LOOP					_multiplyNegative
 		JMP						_addDigitNegative
 
 	_addDigit:
 		MOV						EBX, [EDI]
 		ADD						EAX, EBX
+		JO						_overflow
 		MOV						[EDI], EAX
 		MOV						EAX, [EBP+32]
 		SUB						EAX, 1
@@ -286,6 +304,7 @@ ReadVal PROC
 	_addDigitNegative:
 		MOV						EBX, [EDI]
 		ADD						EAX, EBX
+		JO						_overflow
 		MOV						[EDI], EAX
 		MOV						EAX, [EBP+32]
 		SUB						EAX, 1
@@ -299,18 +318,14 @@ ReadVal PROC
 
 		JMP						_end
 
-
-	
-
+	_overflow:
+		POP						ECX
+		JMP						_badString
 
 		; check for any non number chars (except for minus and plus at start)
 
 		
 	_end:
-		; Need to check int for overflow
-		MOV						EAX, [EDI]
-		call					WriteInt
-
 	
 	POP						ESI
 	POP						EDI
@@ -342,6 +357,69 @@ ReadVal ENDP
 ; Returns:
 ;	NONE
 ; -----------------------------
+WriteVal PROC
 
+WriteVal ENDP
+
+
+; -----------------------------
+; Name: Calculate
+;
+; FILL THIS OUT
+;	
+; Preconditions:
+;	FILL THIS OUT
+;
+; Receives:
+;	[ebp+8]			= assignment array
+;	[ebp+12]		= author array
+;	[ebp+16]		= instruction_1 array
+;	[ebp+20]		= instruction_2 array
+;	[ebp+24]		= instruction_3 array
+;
+; Returns:
+;	NONE
+; -----------------------------
+Calculate PROC
+	PUSH					EBP
+	MOV						EBP, ESP
+	PUSH					EAX
+	PUSH					EBX
+	PUSH					ECX
+	PUSH					EDX
+	PUSH					EDI
+
+	MOV						EDI, [EBP+16]
+	MOV						EAX, 0
+	MOV						ECX, NUMBER
+	MOV						EDX, 0					; Counts the amount of digits
+	MOV						[EBP+8], EAX
+	MOV						[EBP+12], EAX
+
+	_sum:
+		MOV						EAX, [EBP+8]
+		MOV						EBX, [EDI]
+		ADD						EAX, EBX
+		MOV						[EBP+8], EAX
+		ADD						EDI, 4
+		ADD						EDX, 1
+		LOOP					_sum
+
+	MOV						EAX, [EBP+8]
+	MOV						EBX, EDX
+	MOV						EDX, 0
+	CDQ
+	IDIV					EBX
+	Call					WriteInt
+
+	POP						ESI
+	POP						EDX
+	POP						ECX
+	POP						EBX
+	POP						EAX
+	POP						EBP
+	RET						12
+
+Calculate ENDP
 
 END main
