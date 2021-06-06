@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 14:22:59
 2String Primitives and Macros    (Proj6_rostma.asm	     Page 1 - 1
 
 
@@ -241,8 +241,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 	   ]
  0000027D 00000000			string_count		DWORD		?							; Length of string
  00000281 00000000			count				DWORD		?							; Used to track iterations for indexing
- 00000285 00000000			average				DWORD		?							; contains the average of the entered numbers
- 00000289 00000000			sum					DWORD		?							; contains the sum of the average numbers
+ 00000285 00000000			average				SDWORD		?							; contains the average of the entered numbers
+ 00000289 00000000			sum					SDWORD		?							; contains the sum of the average numbers
 
  00000000			.code
  00000000			main PROC
@@ -278,7 +278,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
  0000005E  68 00000231 R		PUSH					OFFSET integers
  00000063  68 00000289 R		PUSH					OFFSET sum
  00000068  68 00000285 R		PUSH					OFFSET average
- 0000006D  E8 00000327			CALL					Calculate
+ 0000006D  E8 0000033B			CALL					Calculate
 
 					; Display message to show user that program will show the strings of integers
  00000072  E8 00000000 E		Call					Crlf
@@ -458,7 +458,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 				;	[ebp+28]		=  count DWORD
 				;	[ebp+32]		=  string_count (length of string input) DWORD
 				;
-				; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28]
+				; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28].
 				; -----------------------------
 
  000001A6			ReadVal PROC
@@ -693,24 +693,27 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 
  00000331			ReadVal ENDP
 
-
 				; -----------------------------
 				; Name: WriteVal
 				;
-				; FILL THIS OUT
+				; Takes an array of integers and the index to access. This then reads that integer and converts it to
+				;	an integer. It does that by dividing the integer by 10 and storing the remainder onto a stack until
+				;	we have reached 0. We then pop the stack and convert the integer into its ASCII equivalent and store
+				;	into a string. Once we have stored all of the BYTES into the string, this calls the mDisplayString
+				;	macro to display the converted string.
 				;	
 				; Preconditions:
-				;	FILL THIS OUT
+				;	The array is an SDWORD
+				;	The count is a valid index in the array
+				;	The string is a BYTE array
 				;
 				; Receives:
-				;	[ebp+8]			= assignment array
-				;	[ebp+12]		= author array
-				;	[ebp+16]		= instruction_1 array
-				;	[ebp+20]		= instruction_2 array
-				;	[ebp+24]		= instruction_3 array
+				;	[ebp+8]			= DWORD array of integers
+				;	[ebp+12]		= string (converted output) BYTE array
+				;	[ebp+16]		= count DWORD, used for indexing [EBP+8]
 				;
 				; Returns:
-				;	NONE
+				;	[ebp+16] now contains the converted string
 				; -----------------------------
 
  00000331			WriteVal PROC
@@ -724,20 +727,21 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
  00000338  52				PUSH					EDX
 
  00000339  B9 00000000			MOV						ECX, 0
- 0000033E  8B 75 08			MOV						ESI, [EBP+8]
+ 0000033E  8B 75 08			MOV						ESI, [EBP+8]			; set integer array as source
  00000341  8B 7D 0C			MOV						EDI, [EBP+12]
  00000344  8B 45 10			MOV						EAX, [EBP+16]
- 00000347  03 30			ADD						ESI, [EAX]
- 00000349  8B 06			MOV						EAX, [ESI]
- 0000034B  83 F8 00			CMP						EAX, 0
+ 00000347  03 30			ADD						ESI, [EAX]				; set to the index of the array that we are reading
+ 00000349  8B 06			MOV						EAX, [ESI]				
+ 0000034B  83 F8 00			CMP						EAX, 0					; see if value is positive or negative
  0000034E  7D 0E			JGE						_printArray
  00000350  F7 D8			NEG						EAX
  00000352  8B D8			MOV						EBX, EAX
  00000354  B8 0000002D			MOV						EAX, 45
- 00000359  AA				STOSB									; Add a minus sign on for negative integers
+ 00000359  AA				STOSB											; Add a minus sign to the string for negative integers
  0000035A  8B C3			MOV						EAX, EBX
  0000035C  EB 00			JMP						_printArray
 								
+					; Divide number by 10 and store remainder onto stack. This allows us to store the values from the integer from first digit to last digit on top of stack
  0000035E				_printArray:
  0000035E  BB 0000000A				MOV						EBX, 10
  00000363  BA 00000000				MOV						EDX, 0
@@ -748,6 +752,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
  0000036F  74 02				JE						_popStack
  00000371  EB EB				JMP						_printArray
 
+					; Pop remainder values and store them into our string. This will be done last digit and iterate thru to the first digit
  00000373				_popStack:
  00000373  5A					POP						EDX	
  00000374  8B C2				MOV						EAX, EDX
@@ -755,13 +760,15 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
  00000379  AA					STOSB
  0000037A  E2 F7				LOOP					_popStack
 
- 0000037C  B9 00000010			MOV						ECX, 16
+ 0000037C  B9 00000010			MOV						ECX, 16					; Set loop to clear trailing characters on the string from old results
  00000381  B0 00			MOV						AL, 0
 
+					; Loop over string to add NULL on each byte after the number ASCII just to make sure there are no trailing artifacts from previous calls to this PROC
  00000383				_clearTrailingCharacters:
  00000383  AA					STOSB
  00000384  E2 FD				LOOP				_clearTrailingCharacters
 
+					; Call macro to display our newly created string!
 					mDisplayString			[EBP+12]
  00000386  52		     1		PUSH		EDX
  00000387  8B 55 0C	     1		MOV			EDX, [EBP+12]
@@ -788,61 +795,67 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 				;	FILL THIS OUT
 				;
 				; Receives:
-				;	[ebp+8]			= assignment array
-				;	[ebp+12]		= author array
-				;	[ebp+16]		= instruction_1 array
-				;	[ebp+20]		= instruction_2 array
-				;	[ebp+24]		= instruction_3 array
+				;	[ebp+8]			= average SDWORD
+				;	[ebp+12]		= sum SDWORD
+				;	[ebp+16]		= integers SDWORD array
+
+
+ 00000399  68 00000231 R		PUSH					OFFSET integers
+ 0000039E  68 00000289 R		PUSH					OFFSET sum
+ 000003A3  68 00000285 R		PUSH					OFFSET average
+ 000003A8  E8 00000000			CALL					Calculate
 				;
 				; Returns:
-				;	NONE
+				;	[EBP]
 				; -----------------------------
 
- 00000399			Calculate PROC
+ 000003AD			Calculate PROC
 
- 00000399  55				PUSH					EBP
- 0000039A  8B EC			MOV						EBP, ESP
- 0000039C  50				PUSH					EAX
- 0000039D  53				PUSH					EBX
- 0000039E  51				PUSH					ECX
- 0000039F  52				PUSH					EDX
- 000003A0  57				PUSH					EDI
+ 000003AD  55				PUSH					EBP
+ 000003AE  8B EC			MOV						EBP, ESP
+ 000003B0  50				PUSH					EAX
+ 000003B1  53				PUSH					EBX
+ 000003B2  51				PUSH					ECX
+ 000003B3  52				PUSH					EDX
+ 000003B4  57				PUSH					EDI
 
- 000003A1  8B 75 10			MOV						ESI, [EBP+16]
- 000003A4  B9 00000003			MOV						ECX, NUMBER
- 000003A9  BA 00000000			MOV						EDX, 0					; Counts the amount of digits
- 000003AE  8B 7D 0C			MOV						EDI, [EBP+12]
+ 000003B5  8B 75 10			MOV						ESI, [EBP+16]
+ 000003B8  B9 00000003			MOV						ECX, NUMBER
+ 000003BD  BA 00000000			MOV						EDX, 0					; Counts the amount of digits
+ 000003C2  8B 7D 0C			MOV						EDI, [EBP+12]
 
- 000003B1				_sum:
- 000003B1  8B 07				MOV						EAX, [EDI]
- 000003B3  8B 1E				MOV						EBX, [ESI]
- 000003B5  03 C3				ADD						EAX, EBX
- 000003B7  89 07				MOV						[EDI], EAX
- 000003B9  83 C6 04				ADD						ESI, 4
- 000003BC  83 C2 01				ADD						EDX, 1
- 000003BF  E2 F0				LOOP					_sum
+					; Loop over the array adding together each integer
+ 000003C5				_sum:
+ 000003C5  8B 07				MOV						EAX, [EDI]
+ 000003C7  8B 1E				MOV						EBX, [ESI]
+ 000003C9  03 C3				ADD						EAX, EBX
+ 000003CB  89 07				MOV						[EDI], EAX
+ 000003CD  83 C6 04				ADD						ESI, 4
+ 000003D0  83 C2 01				ADD						EDX, 1
+ 000003D3  E2 F0				LOOP					_sum
 
- 000003C1  8B 75 0C			MOV						ESI, [EBP+12]
- 000003C4  8B 06			MOV						EAX, [ESI]
- 000003C6  8B DA			MOV						EBX, EDX
- 000003C8  BA 00000000			MOV						EDX, 0
- 000003CD  99				CDQ
- 000003CE  F7 FB			IDIV					EBX
- 000003D0  8B 7D 08			MOV						EDI, [EBP+8]
- 000003D3  89 07			MOV						[EDI], EAX
+					; Calculate the average by dividing the sum by the size of the array
+ 000003D5  8B 75 0C			MOV						ESI, [EBP+12]
+ 000003D8  8B 06			MOV						EAX, [ESI]
+ 000003DA  8B DA			MOV						EBX, EDX
+ 000003DC  BA 00000000			MOV						EDX, 0
+ 000003E1  99				CDQ
+ 000003E2  F7 FB			IDIV					EBX
+ 000003E4  8B 7D 08			MOV						EDI, [EBP+8]
+ 000003E7  89 07			MOV						[EDI], EAX
 
- 000003D5  5E				POP						ESI
- 000003D6  5A				POP						EDX
- 000003D7  59				POP						ECX
- 000003D8  5B				POP						EBX
- 000003D9  58				POP						EAX
- 000003DA  5D				POP						EBP
- 000003DB  C2 000C			RET						12
+ 000003E9  5E				POP						ESI
+ 000003EA  5A				POP						EDX
+ 000003EB  59				POP						ECX
+ 000003EC  5B				POP						EBX
+ 000003ED  58				POP						EAX
+ 000003EE  5D				POP						EBP
+ 000003EF  C2 000C			RET						12
 
- 000003DE			Calculate ENDP
+ 000003F2			Calculate ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 14:22:59
 2String Primitives and Macros    (Proj6_rostma.asm	     Symbols 2 - 1
 
 
@@ -945,15 +958,15 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 0000028D Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000003DE Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000003F2 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
-Calculate  . . . . . . . . . . .	P Near	 00000399 _TEXT	Length= 00000045 Public STDCALL
-  _sum . . . . . . . . . . . . .	L Near	 000003B1 _TEXT	
+Calculate  . . . . . . . . . . .	P Near	 000003AD _TEXT	Length= 00000045 Public STDCALL
+  _sum . . . . . . . . . . . . .	L Near	 000003C5 _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL

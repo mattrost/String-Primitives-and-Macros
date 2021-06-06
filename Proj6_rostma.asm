@@ -87,8 +87,8 @@ mDisplayString MACRO string
 
 ENDM
 
-HI = 16		; Used to set max size for string input
-NUMBER = 3  ; Number of integers to store
+HI = 16			; Used to set max size for string input
+NUMBER = 10		; Number of integers to store
 
 .data
 
@@ -110,8 +110,8 @@ NUMBER = 3  ; Number of integers to store
 	string_output		BYTE		32 DUP(0)					; Contains the converted integer to string
 	string_count		DWORD		?							; Length of string
 	count				DWORD		?							; Used to track iterations for indexing
-	average				DWORD		?							; contains the average of the entered numbers
-	sum					DWORD		?							; contains the sum of the average numbers
+	average				SDWORD		?							; contains the average of the entered numbers
+	sum					SDWORD		?							; contains the sum of the average numbers
 
 .code
 main PROC
@@ -280,7 +280,7 @@ Introduction ENDP
 ;	[ebp+28]		=  count DWORD
 ;	[ebp+32]		=  string_count (length of string input) DWORD
 ;
-; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28]
+; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28].
 ; -----------------------------
 
 ReadVal PROC
@@ -486,20 +486,24 @@ ReadVal ENDP
 ; -----------------------------
 ; Name: WriteVal
 ;
-; FILL THIS OUT
+; Takes an array of integers and the index to access. This then reads that integer and converts it to
+;	an integer. It does that by dividing the integer by 10 and storing the remainder onto a stack until
+;	we have reached 0. We then pop the stack and convert the integer into its ASCII equivalent and store
+;	into a string. Once we have stored all of the BYTES into the string, this calls the mDisplayString
+;	macro to display the converted string.
 ;	
 ; Preconditions:
-;	FILL THIS OUT
+;	The array is an SDWORD
+;	The count is a valid index in the array
+;	The string is a BYTE array
 ;
 ; Receives:
-;	[ebp+8]			= assignment array
-;	[ebp+12]		= author array
-;	[ebp+16]		= instruction_1 array
-;	[ebp+20]		= instruction_2 array
-;	[ebp+24]		= instruction_3 array
+;	[ebp+8]			= DWORD array of integers
+;	[ebp+12]		= string (converted output) BYTE array
+;	[ebp+16]		= count DWORD, used for indexing [EBP+8]
 ;
 ; Returns:
-;	NONE
+;	[ebp+16] now contains the converted string
 ; -----------------------------
 
 WriteVal PROC
@@ -513,20 +517,21 @@ WriteVal PROC
 	PUSH					EDX
 
 	MOV						ECX, 0
-	MOV						ESI, [EBP+8]
+	MOV						ESI, [EBP+8]			; set integer array as source
 	MOV						EDI, [EBP+12]
 	MOV						EAX, [EBP+16]
-	ADD						ESI, [EAX]
-	MOV						EAX, [ESI]
-	CMP						EAX, 0
+	ADD						ESI, [EAX]				; set to the index of the array that we are reading
+	MOV						EAX, [ESI]				
+	CMP						EAX, 0					; see if value is positive or negative
 	JGE						_printArray
 	NEG						EAX
 	MOV						EBX, EAX
 	MOV						EAX, 45
-	STOSB									; Add a minus sign on for negative integers
+	STOSB											; Add a minus sign to the string for negative integers
 	MOV						EAX, EBX
 	JMP						_printArray
 				
+	; Divide number by 10 and store remainder onto stack. This allows us to store the values from the integer from first digit to last digit on top of stack
 	_printArray:
 		MOV						EBX, 10
 		MOV						EDX, 0
@@ -537,6 +542,7 @@ WriteVal PROC
 		JE						_popStack
 		JMP						_printArray
 
+	; Pop remainder values and store them into our string. This will be done last digit and iterate thru to the first digit
 	_popStack:
 		POP						EDX	
 		MOV						EAX, EDX
@@ -544,13 +550,15 @@ WriteVal PROC
 		STOSB
 		LOOP					_popStack
 
-	MOV						ECX, 16
+	MOV						ECX, 16					; Set loop to clear trailing characters on the string from old results
 	MOV						AL, 0
 
+	; Loop over string to add NULL on each byte after the number ASCII just to make sure there are no trailing artifacts from previous calls to this PROC
 	_clearTrailingCharacters:
 		STOSB
 		LOOP				_clearTrailingCharacters
 
+	; Call macro to display our newly created string!
 	mDisplayString			[EBP+12]
 		
 	POP						EDX
@@ -567,20 +575,21 @@ WriteVal ENDP
 ; -----------------------------
 ; Name: Calculate
 ;
-; FILL THIS OUT
+; Takes an array of integers and calculates the average value and the sum of all the values.
+;	It then stores the average and sum into SDWORDs for later use.
 ;	
 ; Preconditions:
-;	FILL THIS OUT
+;	Integers must be DWORD or SDWORD for _sum to work
+;	Average and sum must be large enough to store the values calculated
 ;
 ; Receives:
-;	[ebp+8]			= assignment array
-;	[ebp+12]		= author array
-;	[ebp+16]		= instruction_1 array
-;	[ebp+20]		= instruction_2 array
-;	[ebp+24]		= instruction_3 array
+;	[ebp+8]			= average SDWORD
+;	[ebp+12]		= sum SDWORD
+;	[ebp+16]		= integers SDWORD array
 ;
 ; Returns:
-;	NONE
+;	[ebp+8] set to contain the average of all of the integers in [ebp+16]
+;	[ebp+12] set to contain the sum of all of the integers in [ebp+16]
 ; -----------------------------
 
 Calculate PROC
@@ -595,8 +604,8 @@ Calculate PROC
 
 	MOV						ESI, [EBP+16]
 	MOV						ECX, NUMBER
-	MOV						EDX, 0					; Counts the amount of digits
-	MOV						EDI, [EBP+12]
+	MOV						EDX, 0					; Tracks count of all the digits
+	MOV						EDI, [EBP+12]			; Set destination to sum
 
 	; Loop over the array adding together each integer
 	_sum:
@@ -604,7 +613,7 @@ Calculate PROC
 		MOV						EBX, [ESI]
 		ADD						EAX, EBX
 		MOV						[EDI], EAX
-		ADD						ESI, 4
+		ADD						ESI, 4				; ESI is a SDWORD, so must increment indexing by 4
 		ADD						EDX, 1
 		LOOP					_sum
 
@@ -616,7 +625,7 @@ Calculate PROC
 	CDQ
 	IDIV					EBX
 	MOV						EDI, [EBP+8]
-	MOV						[EDI], EAX
+	MOV						[EDI], EAX				; EAX contains the average, move to the average DWORD
 
 	POP						ESI
 	POP						EDX
