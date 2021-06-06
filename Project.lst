@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 17:51:28
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 18:20:34
 2String Primitives and Macros    (Proj6_rostma.asm	     Page 1 - 1
 
 
@@ -240,7 +240,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 17:51:28
  0000005E  68 000001BF R		PUSH					OFFSET integers
  00000063  68 0000025C R		PUSH					OFFSET sum
  00000068  68 0000023A R		PUSH					OFFSET average
- 0000006D  E8 000002E6			CALL					Calculate
+ 0000006D  E8 00000301			CALL					Calculate
 
  00000072  E8 00000000 E		Call					Crlf
 					mDisplayString			OFFSET output_string
@@ -630,46 +630,54 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 17:51:28
  0000031E  8B 45 10			MOV						EAX, [EBP+16]
  00000321  03 30			ADD						ESI, [EAX]
  00000323  8B 06			MOV						EAX, [ESI]
- 00000325  78 00			JS						_printArrayPositive
+ 00000325  83 F8 00			CMP						EAX, 0
+ 00000328  7D 0E			JGE						_printArray
+ 0000032A  F7 D8			NEG						EAX
+ 0000032C  8B D8			MOV						EBX, EAX
+ 0000032E  B8 0000002D			MOV						EAX, 45
+ 00000333  AA				STOSB
+ 00000334  8B C3			MOV						EAX, EBX
+ 00000336  EB 00			JMP						_printArray
+								
+ 00000338				_printArray:
+ 00000338  BB 0000000A				MOV						EBX, 10
+ 0000033D  BA 00000000				MOV						EDX, 0
+ 00000342  F7 F3				DIV						EBX
+ 00000344  41					INC						ECX
+ 00000345  52					PUSH					EDX
+ 00000346  83 F8 00				CMP						EAX, 0
+ 00000349  74 02				JE						_popStack
+ 0000034B  EB EB				JMP						_printArray
 
+ 0000034D				_popStack:
+ 0000034D  5A					POP						EDX	
+ 0000034E  8B C2				MOV						EAX, EDX
+ 00000350  83 C0 30				ADD						EAX, 48
+ 00000353  AA					STOSB
+ 00000354  E2 F7				LOOP					_popStack
 
+ 00000356  B9 00000010			MOV						ECX, 16
+ 0000035B  B0 00			MOV						AL, 0
 
- 00000327				_printArrayPositive:
- 00000327  BB 0000000A				MOV						EBX, 10
- 0000032C  BA 00000000				MOV						EDX, 0
- 00000331  F7 F3				DIV						EBX
- 00000333  41					INC						ECX
- 00000334  52					PUSH					EDX
- 00000335  83 F8 00				CMP						EAX, 0
- 00000338  74 02				JE						_popStack
- 0000033A  EB EB				JMP						_printArrayPositive
+ 0000035D				_clearTrailingCharacters:
+ 0000035D  AA					STOSB
+ 0000035E  E2 FD				LOOP				_clearTrailingCharacters
 
-
- 0000033C				_printArrayNegative:
-
-
- 0000033C				_popStack:
- 0000033C  5A					POP						EDX	
- 0000033D  8B C2				MOV						EAX, EDX
- 0000033F  83 C0 30				ADD						EAX, 48
- 00000342  AA					STOSB
- 00000343  E2 F7				LOOP					_popStack
-						mDisplayString			[EBP+12]
- 00000345  52		     1		PUSH		EDX
- 00000346  8B 55 0C	     1		MOV			EDX, [EBP+12]
- 00000349  E8 00000000 E     1		CALL		WriteString
- 0000034E  5A		     1		POP			EDX
-
+					mDisplayString			[EBP+12]
+ 00000360  52		     1		PUSH		EDX
+ 00000361  8B 55 0C	     1		MOV			EDX, [EBP+12]
+ 00000364  E8 00000000 E     1		CALL		WriteString
+ 00000369  5A		     1		POP			EDX
 						
- 0000034F  5A				POP						EDX
- 00000350  59				POP						ECX
- 00000351  58				POP						EAX
- 00000352  5F				POP						EDI
- 00000353  5E				POP						ESI
- 00000354  5D				POP						EBP
- 00000355  C2 000C			RET						12
+ 0000036A  5A				POP						EDX
+ 0000036B  59				POP						ECX
+ 0000036C  58				POP						EAX
+ 0000036D  5F				POP						EDI
+ 0000036E  5E				POP						ESI
+ 0000036F  5D				POP						EBP
+ 00000370  C2 000C			RET						12
 
- 00000358			WriteVal ENDP
+ 00000373			WriteVal ENDP
 
 
 				; -----------------------------
@@ -690,50 +698,50 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 17:51:28
 				; Returns:
 				;	NONE
 				; -----------------------------
- 00000358			Calculate PROC
- 00000358  55				PUSH					EBP
- 00000359  8B EC			MOV						EBP, ESP
- 0000035B  50				PUSH					EAX
- 0000035C  53				PUSH					EBX
- 0000035D  51				PUSH					ECX
- 0000035E  52				PUSH					EDX
- 0000035F  57				PUSH					EDI
+ 00000373			Calculate PROC
+ 00000373  55				PUSH					EBP
+ 00000374  8B EC			MOV						EBP, ESP
+ 00000376  50				PUSH					EAX
+ 00000377  53				PUSH					EBX
+ 00000378  51				PUSH					ECX
+ 00000379  52				PUSH					EDX
+ 0000037A  57				PUSH					EDI
 
- 00000360  8B 75 10			MOV						ESI, [EBP+16]
- 00000363  B9 00000003			MOV						ECX, NUMBER
- 00000368  BA 00000000			MOV						EDX, 0					; Counts the amount of digits
- 0000036D  8B 7D 0C			MOV						EDI, [EBP+12]
+ 0000037B  8B 75 10			MOV						ESI, [EBP+16]
+ 0000037E  B9 00000003			MOV						ECX, NUMBER
+ 00000383  BA 00000000			MOV						EDX, 0					; Counts the amount of digits
+ 00000388  8B 7D 0C			MOV						EDI, [EBP+12]
 
- 00000370				_sum:
- 00000370  8B 07				MOV						EAX, [EDI]
- 00000372  8B 1E				MOV						EBX, [ESI]
- 00000374  03 C3				ADD						EAX, EBX
- 00000376  89 07				MOV						[EDI], EAX
- 00000378  83 C6 04				ADD						ESI, 4
- 0000037B  83 C2 01				ADD						EDX, 1
- 0000037E  E2 F0				LOOP					_sum
+ 0000038B				_sum:
+ 0000038B  8B 07				MOV						EAX, [EDI]
+ 0000038D  8B 1E				MOV						EBX, [ESI]
+ 0000038F  03 C3				ADD						EAX, EBX
+ 00000391  89 07				MOV						[EDI], EAX
+ 00000393  83 C6 04				ADD						ESI, 4
+ 00000396  83 C2 01				ADD						EDX, 1
+ 00000399  E2 F0				LOOP					_sum
 
- 00000380  8B 75 0C			MOV						ESI, [EBP+12]
- 00000383  8B 06			MOV						EAX, [ESI]
- 00000385  8B DA			MOV						EBX, EDX
- 00000387  BA 00000000			MOV						EDX, 0
- 0000038C  99				CDQ
- 0000038D  F7 FB			IDIV					EBX
- 0000038F  8B 7D 08			MOV						EDI, [EBP+8]
- 00000392  89 07			MOV						[EDI], EAX
+ 0000039B  8B 75 0C			MOV						ESI, [EBP+12]
+ 0000039E  8B 06			MOV						EAX, [ESI]
+ 000003A0  8B DA			MOV						EBX, EDX
+ 000003A2  BA 00000000			MOV						EDX, 0
+ 000003A7  99				CDQ
+ 000003A8  F7 FB			IDIV					EBX
+ 000003AA  8B 7D 08			MOV						EDI, [EBP+8]
+ 000003AD  89 07			MOV						[EDI], EAX
 
- 00000394  5E				POP						ESI
- 00000395  5A				POP						EDX
- 00000396  59				POP						ECX
- 00000397  5B				POP						EBX
- 00000398  58				POP						EAX
- 00000399  5D				POP						EBP
- 0000039A  C2 000C			RET						12
+ 000003AF  5E				POP						ESI
+ 000003B0  5A				POP						EDX
+ 000003B1  59				POP						ECX
+ 000003B2  5B				POP						EBX
+ 000003B3  58				POP						EAX
+ 000003B4  5D				POP						EBP
+ 000003B5  C2 000C			RET						12
 
- 0000039D			Calculate ENDP
+ 000003B8			Calculate ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 17:51:28
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/05/21 18:20:34
 2String Primitives and Macros    (Proj6_rostma.asm	     Symbols 2 - 1
 
 
@@ -836,15 +844,15 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 0000028D Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000039D Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000003B8 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
-Calculate  . . . . . . . . . . .	P Near	 00000358 _TEXT	Length= 00000045 Public STDCALL
-  _sum . . . . . . . . . . . . .	L Near	 00000370 _TEXT	
+Calculate  . . . . . . . . . . .	P Near	 00000373 _TEXT	Length= 00000045 Public STDCALL
+  _sum . . . . . . . . . . . . .	L Near	 0000038B _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -959,10 +967,10 @@ WriteStackFrameName  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-WriteVal . . . . . . . . . . . .	P Near	 0000030B _TEXT	Length= 0000004D Public STDCALL
-  _printArrayPositive  . . . . .	L Near	 00000327 _TEXT	
-  _printArrayNegative  . . . . .	L Near	 0000033C _TEXT	
-  _popStack  . . . . . . . . . .	L Near	 0000033C _TEXT	
+WriteVal . . . . . . . . . . . .	P Near	 0000030B _TEXT	Length= 00000068 Public STDCALL
+  _printArray  . . . . . . . . .	L Near	 00000338 _TEXT	
+  _popStack  . . . . . . . . . .	L Near	 0000034D _TEXT	
+  _clearTrailingCharacters . . .	L Near	 0000035D _TEXT	
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000148 Public STDCALL
   _getValidStrings . . . . . . .	L Near	 0000002D _TEXT	

@@ -51,7 +51,7 @@ mDisplayString MACRO string
 ENDM
 
 HI = 32
-NUMBER = 3 ; Number of integers to store
+NUMBER = 10 ; Number of integers to store
 
 .data
 
@@ -424,11 +424,16 @@ WriteVal PROC
 	MOV						EAX, [EBP+16]
 	ADD						ESI, [EAX]
 	MOV						EAX, [ESI]
-	JS						_printArrayPositive
-
-
-
-	_printArrayPositive:
+	CMP						EAX, 0
+	JGE						_printArray
+	NEG						EAX
+	MOV						EBX, EAX
+	MOV						EAX, 45
+	STOSB									; Add a minus sign on for negative integers
+	MOV						EAX, EBX
+	JMP						_printArray
+				
+	_printArray:
 		MOV						EBX, 10
 		MOV						EDX, 0
 		DIV						EBX
@@ -436,11 +441,7 @@ WriteVal PROC
 		PUSH					EDX
 		CMP						EAX, 0
 		JE						_popStack
-		JMP						_printArrayPositive
-
-
-	_printArrayNegative:
-
+		JMP						_printArray
 
 	_popStack:
 		POP						EDX	
@@ -448,8 +449,15 @@ WriteVal PROC
 		ADD						EAX, 48
 		STOSB
 		LOOP					_popStack
-		mDisplayString			[EBP+12]
 
+	MOV						ECX, 16
+	MOV						AL, 0
+
+	_clearTrailingCharacters:
+		STOSB
+		LOOP				_clearTrailingCharacters
+
+	mDisplayString			[EBP+12]
 		
 	POP						EDX
 	POP						ECX
