@@ -27,7 +27,7 @@ mGetString MACRO prompt, user_input, input_length
 	CALL		WriteString
 
 	MOV			EDX, user_input
-	MOV			ECX, HI
+	MOV			ECX, 10
 
 	CALL		ReadString
 	MOV			input_length, EAX
@@ -36,6 +36,8 @@ mGetString MACRO prompt, user_input, input_length
 	POP			ECX
 	POP			EDX
 ENDM
+
+; mMakeString
 
 ; mDisplayString based off of MacroDemo.asm from Module 8 - Exploration 2
 mDisplayString MACRO string
@@ -49,7 +51,7 @@ mDisplayString MACRO string
 ENDM
 
 HI = 32
-NUMBER = 10 ; Number of integers to store
+NUMBER = 3 ; Number of integers to store
 
 .data
 
@@ -62,12 +64,14 @@ NUMBER = 10 ; Number of integers to store
 	input_bad			BYTE		"ERROR: You did not enter a signed number or your number was too big.", 0
 	input_try_again		BYTE		"Please try again: ", 0
 	integers			SDWORD		NUMBER DUP(?)
-	string				BYTE		33 DUP(0)
+	string				BYTE		32 DUP(0)
+	string_output		BYTE		32 DUP(0)
 	string_count		DWORD		?
 	count				DWORD		?
 	output_string		BYTE		"You entered the following numbers: ", 0
+	comma				BYTE		", ", 0
 	average				DWORD		?
-	sum_string			BYTE		"The sum of these numbers is ", 0
+	sum_string			BYTE		"The sum of these numbers is: ", 0
 	sum					DWORD		?
 	rounded_string		BYTE		"The rounded average is: ", 0
 	goodbye				BYTE		"Thanks for playing!", 0
@@ -76,34 +80,82 @@ NUMBER = 10 ; Number of integers to store
 main PROC
 	
 	; Display Introduction and Prompt
-	PUSH			OFFSET instruction_3
-	PUSH			OFFSET instruction_2
-	PUSH			OFFSET instruction_1
-	PUSH			OFFSET author
-	PUSH			OFFSET assignment
-	CALL			Introduction
+	PUSH					OFFSET instruction_3
+	PUSH					OFFSET instruction_2
+	PUSH					OFFSET instruction_1
+	PUSH					OFFSET author
+	PUSH					OFFSET assignment
+	CALL					Introduction
 
-	MOV				ECX, NUMBER
+	MOV						ECX, NUMBER
+	MOV						EAX, 0
+	MOV						count, EAX
 
 	_getValidStrings:
 		; Loop to get valid integers
 		; call ReadVal
-		PUSH			OFFSET string_count
-		PUSH			OFFSET count
-		PUSH			OFFSET string
-		PUSH			OFFSET integers
-		PUSH			OFFSET input_try_again
-		PUSH			OFFSET input_bad
-		PUSH			OFFSET input_prompt
-		CALL			ReadVal
-		ADD				count, 4
-		LOOP			_getValidStrings
+		PUSH					OFFSET string_count
+		PUSH					OFFSET count
+		PUSH					OFFSET string
+		PUSH					OFFSET integers
+		PUSH					OFFSET input_try_again
+		PUSH					OFFSET input_bad
+		PUSH					OFFSET input_prompt
+		CALL					ReadVal
+		ADD						count, 4
+		LOOP					_getValidStrings
 
-	PUSH			OFFSET integers
-	PUSH			OFFSET sum
-	PUSH			OFFSET average
-	CALL			Calculate
-	
+	PUSH					OFFSET integers
+	PUSH					OFFSET sum
+	PUSH					OFFSET average
+	CALL					Calculate
+
+	Call					Crlf
+	mDisplayString			OFFSET output_string
+	Call					Crlf
+
+	MOV						EAX, 0
+	MOV						count, EAX
+	MOV						ECX, NUMBER
+
+	_enteredNumbers:
+		MOV						string_output, 0
+		PUSH					OFFSET count
+		PUSH					OFFSET string_output
+		PUSH					OFFSET integers
+		CALL					WriteVal
+		ADD						count, 4
+		CMP						ECX, 1
+		JE						_enteredNumbersNoComma
+		mDisplayString			OFFSET comma
+		LOOP					_enteredNumbers
+
+	_enteredNumbersNoComma:
+		LOOP					_enteredNumbersNoComma
+		
+
+	MOV						string_output, 0
+	MOV						count, EAX
+	Call					Crlf
+	mDisplayString			OFFSET sum_string
+
+	PUSH					OFFSET count
+	PUSH					OFFSET string_output
+	PUSH					OFFSET sum
+	CALL					WriteVal
+
+	MOV						string_output, 0
+	Call					Crlf
+	mDisplayString			OFFSET rounded_string		
+
+	PUSH					OFFSET count
+	PUSH					OFFSET string_output
+	PUSH					OFFSET average
+	CALL					WriteVal
+
+	Call					Crlf
+	Call					Crlf
+	mDisplayString			OFFSET goodbye
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -326,7 +378,7 @@ ReadVal PROC
 
 		
 	_end:
-	
+
 	POP						ESI
 	POP						EDI
 	POP						EDX
@@ -358,6 +410,54 @@ ReadVal ENDP
 ;	NONE
 ; -----------------------------
 WriteVal PROC
+	PUSH					EBP
+	MOV						EBP, ESP
+	PUSH					ESI
+	PUSH					EDI
+	PUSH					EAX
+	PUSH					ECX
+	PUSH					EDX
+
+	MOV						ECX, 0
+	MOV						ESI, [EBP+8]
+	MOV						EDI, [EBP+12]
+	MOV						EAX, [EBP+16]
+	ADD						ESI, [EAX]
+	MOV						EAX, [ESI]
+	JS						_printArrayPositive
+
+
+
+	_printArrayPositive:
+		MOV						EBX, 10
+		MOV						EDX, 0
+		DIV						EBX
+		INC						ECX
+		PUSH					EDX
+		CMP						EAX, 0
+		JE						_popStack
+		JMP						_printArrayPositive
+
+
+	_printArrayNegative:
+
+
+	_popStack:
+		POP						EDX	
+		MOV						EAX, EDX
+		ADD						EAX, 48
+		STOSB
+		LOOP					_popStack
+		mDisplayString			[EBP+12]
+
+		
+	POP						EDX
+	POP						ECX
+	POP						EAX
+	POP						EDI
+	POP						ESI
+	POP						EBP
+	RET						12
 
 WriteVal ENDP
 
@@ -389,28 +489,28 @@ Calculate PROC
 	PUSH					EDX
 	PUSH					EDI
 
-	MOV						EDI, [EBP+16]
-	MOV						EAX, 0
+	MOV						ESI, [EBP+16]
 	MOV						ECX, NUMBER
 	MOV						EDX, 0					; Counts the amount of digits
-	MOV						[EBP+8], EAX
-	MOV						[EBP+12], EAX
+	MOV						EDI, [EBP+12]
 
 	_sum:
-		MOV						EAX, [EBP+8]
-		MOV						EBX, [EDI]
+		MOV						EAX, [EDI]
+		MOV						EBX, [ESI]
 		ADD						EAX, EBX
-		MOV						[EBP+8], EAX
-		ADD						EDI, 4
+		MOV						[EDI], EAX
+		ADD						ESI, 4
 		ADD						EDX, 1
 		LOOP					_sum
 
-	MOV						EAX, [EBP+8]
+	MOV						ESI, [EBP+12]
+	MOV						EAX, [ESI]
 	MOV						EBX, EDX
 	MOV						EDX, 0
 	CDQ
 	IDIV					EBX
-	Call					WriteInt
+	MOV						EDI, [EBP+8]
+	MOV						[EDI], EAX
 
 	POP						ESI
 	POP						EDX
