@@ -4,7 +4,7 @@ TITLE String Primitives and Macros    (Proj6_rostma.asm)
 ; Last Modified: 6/6/2021
 ; OSU email address: rostma@oregonstate.edu
 ; Course number/section:   CS271 Section 400
-; Project Number:                 Due Date: 6/6/2021
+; Project Number: 6               Due Date: 6/6/2021
 ; Description: This is the portfolio project file for CS 271. This file
 ;              is a program that implements macros for string processing.
 ;			   It also uses procedures for signed integers which use
@@ -22,6 +22,12 @@ INCLUDE Irvine32.inc
 ; Prompts the user to input a string and stores the string.
 ;
 ; Preconditions:
+;	ReadString: Memory OFFSET in EDX
+;	ReadString: Size of memory destination in ECX
+;
+; Postconditions:
+;	ReadString: String entered is in memory starting in OFFSET
+;	ReadString: Length of string entered is in EAX
 ;
 ; Receives:
 ; prompt = string BYTE array
@@ -59,6 +65,10 @@ ENDM
 ; Prints out a string.
 ;
 ; Preconditions:
+;	WriteString: Memory OFFSET in EDX
+;
+; Postconditions:
+;	WriteString: String Displayed
 ;
 ; Receives:
 ; string = string BYTE array
@@ -78,7 +88,7 @@ mDisplayString MACRO string
 ENDM
 
 HI = 16		; Used to set max size for string input
-NUMBER = 3 ; Number of integers to store
+NUMBER = 3  ; Number of integers to store
 
 .data
 
@@ -90,18 +100,18 @@ NUMBER = 3 ; Number of integers to store
 	input_prompt		BYTE		"Please enter a signed number: ", 0
 	input_bad			BYTE		"ERROR: You did not enter a signed number or your number was too big.", 0
 	input_try_again		BYTE		"Please try again: ", 0
-	integers			SDWORD		NUMBER DUP(?)
-	string				BYTE		32 DUP(0)
-	string_output		BYTE		32 DUP(0)
-	string_count		DWORD		?
-	count				DWORD		?
 	output_string		BYTE		"You entered the following numbers: ", 0
 	comma				BYTE		", ", 0
-	average				DWORD		?
 	sum_string			BYTE		"The sum of these numbers is: ", 0
-	sum					DWORD		?
 	rounded_string		BYTE		"The rounded average is: ", 0
 	goodbye				BYTE		"Thanks for playing!", 0
+	integers			SDWORD		NUMBER DUP(?)				; Contains an array of NUMBER size with integers
+	string				BYTE		32 DUP(0)					; Contains the user string when inputted
+	string_output		BYTE		32 DUP(0)					; Contains the converted integer to string
+	string_count		DWORD		?							; Length of string
+	count				DWORD		?							; Used to track iterations for indexing
+	average				DWORD		?							; contains the average of the entered numbers
+	sum					DWORD		?							; contains the sum of the average numbers
 
 .code
 main PROC
@@ -129,7 +139,7 @@ main PROC
 		PUSH					OFFSET input_bad
 		PUSH					OFFSET input_prompt
 		CALL					ReadVal
-		ADD						count, 4				; Tracks index
+		ADD						count, 4					; index counter goes up by 4 since DWORD
 		LOOP					_getValidStrings
 
 	; Calculate sum and average
@@ -144,18 +154,18 @@ main PROC
 	Call					Crlf
 
 	MOV						EAX, 0
-	MOV						count, EAX
+	MOV						count, EAX		; Set index counter to 0
 	MOV						ECX, NUMBER
 
 	; Loop to display the entered numbers as strings
 	_enteredNumbers:
 		MOV						string_output, 0
-		PUSH					OFFSET count
+		PUSH					OFFSET count				; Used for indexing
 		PUSH					OFFSET string_output
 		PUSH					OFFSET integers
 		CALL					WriteVal
-		ADD						count, 4
-		CMP						ECX, 1
+		ADD						count, 4					; index counter goes up by 4 since DWORD
+		CMP						ECX, 1						; Verify if this is the last iteration
 		JE						_enteredNumbersNoComma
 		mDisplayString			OFFSET comma
 		LOOP					_enteredNumbers
@@ -164,7 +174,7 @@ main PROC
 	_enteredNumbersNoComma:
 		LOOP					_enteredNumbersNoComma
 		
-
+	; Display text to show the upcoming string is the sum
 	MOV						string_output, 0
 	MOV						count, EAX
 	Call					Crlf
@@ -176,6 +186,7 @@ main PROC
 	PUSH					OFFSET sum
 	CALL					WriteVal
 
+	; Display text to show the upcoming number is the average
 	MOV						string_output, 0
 	Call					Crlf
 	mDisplayString			OFFSET rounded_string		
@@ -188,6 +199,7 @@ main PROC
 
 	Call					Crlf
 	Call					Crlf
+	; Display goodbye message to user
 	mDisplayString			OFFSET goodbye
 
 	Invoke ExitProcess,0	; exit to operating system
@@ -196,10 +208,20 @@ main ENDP
 ; -----------------------------
 ; Name: Introduction
 ;
-; FILL THIS OUT
+; This section will display an introduction and a program description to the user. It asks the
+;	user to input 10 signed decimal integers. It also tells them that after they have finished
+;	inputting the numbers, the program will display a list of the integers, their sum, and their
+;	average value.
 ;	
 ; Preconditions:
-;	FILL THIS OUT
+;	For mDisplayString to work, the OFFSETs of the strings must be passed
+;
+; Postconditions:
+;	[ebp+8]		string displayed
+;	[ebp+12]	string displayed
+;	[ebp+16]	string displayed
+;	[ebp+20]	string displayed
+;	[ebp+24]	string displayed
 ;
 ; Receives:
 ;	[ebp+8]			= assignment array
@@ -211,6 +233,7 @@ main ENDP
 ; Returns:
 ;	NONE
 ; -----------------------------
+
 Introduction PROC
 	PUSH					EBP
 	MOV						EBP, ESP
@@ -222,10 +245,13 @@ Introduction PROC
 	mDisplayString			[EBP+12]
 	CALL					Crlf
 	CALL					Crlf
+
 	mDisplayString			[EBP+16]
 	CALL					Crlf
+
 	mDisplayString			[EBP+20]
 	CALL					Crlf
+
 	mDisplayString			[EBP+24]
 	CALL					Crlf
 	CALL					Crlf
@@ -256,6 +282,7 @@ Introduction ENDP
 ; Returns:
 ;	NONE
 ; -----------------------------
+
 ReadVal PROC
 	PUSH					EBP
 	MOV						EBP, ESP
@@ -466,6 +493,7 @@ ReadVal ENDP
 ; Returns:
 ;	NONE
 ; -----------------------------
+
 WriteVal PROC
 	PUSH					EBP
 	MOV						EBP, ESP
@@ -545,6 +573,7 @@ WriteVal ENDP
 ; Returns:
 ;	NONE
 ; -----------------------------
+
 Calculate PROC
 	PUSH					EBP
 	MOV						EBP, ESP

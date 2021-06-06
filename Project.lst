@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
 2String Primitives and Macros    (Proj6_rostma.asm	     Page 1 - 1
 
 
@@ -8,7 +8,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Last Modified: 6/6/2021
 				; OSU email address: rostma@oregonstate.edu
 				; Course number/section:   CS271 Section 400
-				; Project Number:                 Due Date: 6/6/2021
+				; Project Number: 6               Due Date: 6/6/2021
 				; Description: This is the portfolio project file for CS 271. This file
 				;              is a program that implements macros for string processing.
 				;			   It also uses procedures for signed integers which use
@@ -43,6 +43,12 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Prompts the user to input a string and stores the string.
 				;
 				; Preconditions:
+				;	ReadString: Memory OFFSET in EDX
+				;	ReadString: Size of memory destination in ECX
+				;
+				; Postconditions:
+				;	ReadString: String entered is in memory starting in OFFSET
+				;	ReadString: Length of string entered is in EAX
 				;
 				; Receives:
 				; prompt = string BYTE array
@@ -80,6 +86,10 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Prints out a string.
 				;
 				; Preconditions:
+				;	WriteString: Memory OFFSET in EDX
+				;
+				; Postconditions:
+				;	WriteString: String Displayed
 				;
 				; Receives:
 				; string = string BYTE array
@@ -99,7 +109,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				ENDM
 
  = 00000010			HI = 16		; Used to set max size for string input
- = 00000003			NUMBER = 3 ; Number of integers to store
+ = 00000003			NUMBER = 3  ; Number of integers to store
 
  00000000			.data
 
@@ -196,18 +206,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 	   65 20 74 72 79
 	   20 61 67 61 69
 	   6E 3A 20 00
- 000001BF  00000003 [			integers			SDWORD		NUMBER DUP(?)
-	    00000000
-	   ]
- 000001CB  00000020 [			string				BYTE		32 DUP(0)
-	    00
-	   ]
- 000001EB  00000020 [			string_output		BYTE		32 DUP(0)
-	    00
-	   ]
- 0000020B 00000000			string_count		DWORD		?
- 0000020F 00000000			count				DWORD		?
- 00000213 59 6F 75 20 65		output_string		BYTE		"You entered the following numbers: ", 0
+ 000001BF 59 6F 75 20 65		output_string		BYTE		"You entered the following numbers: ", 0
 	   6E 74 65 72 65
 	   64 20 74 68 65
 	   20 66 6F 6C 6C
@@ -215,24 +214,35 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 	   20 6E 75 6D 62
 	   65 72 73 3A 20
 	   00
- 00000237 2C 20 00			comma				BYTE		", ", 0
- 0000023A 00000000			average				DWORD		?
- 0000023E 54 68 65 20 73		sum_string			BYTE		"The sum of these numbers is: ", 0
+ 000001E3 2C 20 00			comma				BYTE		", ", 0
+ 000001E6 54 68 65 20 73		sum_string			BYTE		"The sum of these numbers is: ", 0
 	   75 6D 20 6F 66
 	   20 74 68 65 73
 	   65 20 6E 75 6D
 	   62 65 72 73 20
 	   69 73 3A 20 00
- 0000025C 00000000			sum					DWORD		?
- 00000260 54 68 65 20 72		rounded_string		BYTE		"The rounded average is: ", 0
+ 00000204 54 68 65 20 72		rounded_string		BYTE		"The rounded average is: ", 0
 	   6F 75 6E 64 65
 	   64 20 61 76 65
 	   72 61 67 65 20
 	   69 73 3A 20 00
- 00000279 54 68 61 6E 6B		goodbye				BYTE		"Thanks for playing!", 0
+ 0000021D 54 68 61 6E 6B		goodbye				BYTE		"Thanks for playing!", 0
 	   73 20 66 6F 72
 	   20 70 6C 61 79
 	   69 6E 67 21 00
+ 00000231  00000003 [			integers			SDWORD		NUMBER DUP(?)				; Contains an array of NUMBER size with integers
+	    00000000
+	   ]
+ 0000023D  00000020 [			string				BYTE		32 DUP(0)					; Contains the user string when inputted
+	    00
+	   ]
+ 0000025D  00000020 [			string_output		BYTE		32 DUP(0)					; Contains the converted integer to string
+	    00
+	   ]
+ 0000027D 00000000			string_count		DWORD		?							; Length of string
+ 00000281 00000000			count				DWORD		?							; Used to track iterations for indexing
+ 00000285 00000000			average				DWORD		?							; contains the average of the entered numbers
+ 00000289 00000000			sum					DWORD		?							; contains the sum of the average numbers
 
  00000000			.code
  00000000			main PROC
@@ -248,56 +258,56 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 					; Set counter to NUMBER and count to 0
  0000001E  B9 00000003			MOV						ECX, NUMBER
  00000023  B8 00000000			MOV						EAX, 0
- 00000028  A3 0000020F R		MOV						count, EAX
+ 00000028  A3 00000281 R		MOV						count, EAX
 
 					; Loop to get valid integers from user
  0000002D				_getValidStrings:
- 0000002D  68 0000020B R			PUSH					OFFSET string_count
- 00000032  68 0000020F R			PUSH					OFFSET count
- 00000037  68 000001CB R			PUSH					OFFSET string
- 0000003C  68 000001BF R			PUSH					OFFSET integers
+ 0000002D  68 0000027D R			PUSH					OFFSET string_count
+ 00000032  68 00000281 R			PUSH					OFFSET count
+ 00000037  68 0000023D R			PUSH					OFFSET string
+ 0000003C  68 00000231 R			PUSH					OFFSET integers
  00000041  68 000001AC R			PUSH					OFFSET input_try_again
  00000046  68 00000167 R			PUSH					OFFSET input_bad
  0000004B  68 00000148 R			PUSH					OFFSET input_prompt
  00000050  E8 00000151				CALL					ReadVal
- 00000055  83 05 0000020F R			ADD						count, 4				; Tracks index
+ 00000055  83 05 00000281 R			ADD						count, 4					; index counter goes up by 4 since DWORD
 	   04
  0000005C  E2 CF				LOOP					_getValidStrings
 
 					; Calculate sum and average
- 0000005E  68 000001BF R		PUSH					OFFSET integers
- 00000063  68 0000025C R		PUSH					OFFSET sum
- 00000068  68 0000023A R		PUSH					OFFSET average
+ 0000005E  68 00000231 R		PUSH					OFFSET integers
+ 00000063  68 00000289 R		PUSH					OFFSET sum
+ 00000068  68 00000285 R		PUSH					OFFSET average
  0000006D  E8 00000327			CALL					Calculate
 
 
  00000072  E8 00000000 E		Call					Crlf
 					mDisplayString			OFFSET output_string
  00000077  52		     1		PUSH		EDX
- 00000078  BA 00000213 R     1		MOV			EDX, OFFSET output_string
+ 00000078  BA 000001BF R     1		MOV			EDX, OFFSET output_string
  0000007D  E8 00000000 E     1		CALL		WriteString
  00000082  5A		     1		POP			EDX
  00000083  E8 00000000 E		Call					Crlf
 
  00000088  B8 00000000			MOV						EAX, 0
- 0000008D  A3 0000020F R		MOV						count, EAX
+ 0000008D  A3 00000281 R		MOV						count, EAX		; Set index counter to 0
  00000092  B9 00000003			MOV						ECX, NUMBER
 
 					; Loop to display the entered numbers as strings
  00000097				_enteredNumbers:
- 00000097  C6 05 000001EB R			MOV						string_output, 0
+ 00000097  C6 05 0000025D R			MOV						string_output, 0
 	   00
- 0000009E  68 0000020F R			PUSH					OFFSET count
- 000000A3  68 000001EB R			PUSH					OFFSET string_output
- 000000A8  68 000001BF R			PUSH					OFFSET integers
+ 0000009E  68 00000281 R			PUSH					OFFSET count				; Used for indexing
+ 000000A3  68 0000025D R			PUSH					OFFSET string_output
+ 000000A8  68 00000231 R			PUSH					OFFSET integers
  000000AD  E8 0000027F				CALL					WriteVal
- 000000B2  83 05 0000020F R			ADD						count, 4
+ 000000B2  83 05 00000281 R			ADD						count, 4					; index counter goes up by 4 since DWORD
 	   04
- 000000B9  83 F9 01				CMP						ECX, 1
+ 000000B9  83 F9 01				CMP						ECX, 1						; Verify if this is the last iteration
  000000BC  74 0E				JE						_enteredNumbersNoComma
 						mDisplayString			OFFSET comma
  000000BE  52		     1		PUSH		EDX
- 000000BF  BA 00000237 R     1		MOV			EDX, OFFSET comma
+ 000000BF  BA 000001E3 R     1		MOV			EDX, OFFSET comma
  000000C4  E8 00000000 E     1		CALL		WriteString
  000000C9  5A		     1		POP			EDX
  000000CA  E2 CB				LOOP					_enteredNumbers
@@ -306,43 +316,45 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
  000000CC				_enteredNumbersNoComma:
  000000CC  E2 FE				LOOP					_enteredNumbersNoComma
 						
-
- 000000CE  C6 05 000001EB R		MOV						string_output, 0
+					; Display text to show the upcoming string is the sum
+ 000000CE  C6 05 0000025D R		MOV						string_output, 0
 	   00
- 000000D5  A3 0000020F R		MOV						count, EAX
+ 000000D5  A3 00000281 R		MOV						count, EAX
  000000DA  E8 00000000 E		Call					Crlf
 					mDisplayString			OFFSET sum_string
  000000DF  52		     1		PUSH		EDX
- 000000E0  BA 0000023E R     1		MOV			EDX, OFFSET sum_string
+ 000000E0  BA 000001E6 R     1		MOV			EDX, OFFSET sum_string
  000000E5  E8 00000000 E     1		CALL		WriteString
  000000EA  5A		     1		POP			EDX
 
 					; Display sum string
- 000000EB  68 0000020F R		PUSH					OFFSET count
- 000000F0  68 000001EB R		PUSH					OFFSET string_output
- 000000F5  68 0000025C R		PUSH					OFFSET sum
+ 000000EB  68 00000281 R		PUSH					OFFSET count
+ 000000F0  68 0000025D R		PUSH					OFFSET string_output
+ 000000F5  68 00000289 R		PUSH					OFFSET sum
  000000FA  E8 00000232			CALL					WriteVal
 
- 000000FF  C6 05 000001EB R		MOV						string_output, 0
+					; Display text to show the upcoming number is the average
+ 000000FF  C6 05 0000025D R		MOV						string_output, 0
 	   00
  00000106  E8 00000000 E		Call					Crlf
 					mDisplayString			OFFSET rounded_string		
  0000010B  52		     1		PUSH		EDX
- 0000010C  BA 00000260 R     1		MOV			EDX, OFFSET rounded_string
+ 0000010C  BA 00000204 R     1		MOV			EDX, OFFSET rounded_string
  00000111  E8 00000000 E     1		CALL		WriteString
  00000116  5A		     1		POP			EDX
 
 					; Display average string
- 00000117  68 0000020F R		PUSH					OFFSET count
- 0000011C  68 000001EB R		PUSH					OFFSET string_output
- 00000121  68 0000023A R		PUSH					OFFSET average
+ 00000117  68 00000281 R		PUSH					OFFSET count
+ 0000011C  68 0000025D R		PUSH					OFFSET string_output
+ 00000121  68 00000285 R		PUSH					OFFSET average
  00000126  E8 00000206			CALL					WriteVal
 
  0000012B  E8 00000000 E		Call					Crlf
  00000130  E8 00000000 E		Call					Crlf
+					; Display goodbye message to user
 					mDisplayString			OFFSET goodbye
  00000135  52		     1		PUSH		EDX
- 00000136  BA 00000279 R     1		MOV			EDX, OFFSET goodbye
+ 00000136  BA 0000021D R     1		MOV			EDX, OFFSET goodbye
  0000013B  E8 00000000 E     1		CALL		WriteString
  00000140  5A		     1		POP			EDX
 
@@ -354,7 +366,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; -----------------------------
 				; Name: Introduction
 				;
-				; FILL THIS OUT
+				; This section will display an introduction and a program description to the user. It tells the
+				;	user that the program will make a random array of 200 numbers between 10 and 29, sort the array
+				;	calculate the median, count each time an integer is in the array, and then print the original array,
+				;	sorted array, median, integer count array. This is all done with string arrays that contain the
+				;	description.
 				;	
 				; Preconditions:
 				;	FILL THIS OUT
@@ -369,6 +385,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Returns:
 				;	NONE
 				; -----------------------------
+
  00000148			Introduction PROC
  00000148  55				PUSH					EBP
  00000149  8B EC			MOV						EBP, ESP
@@ -434,6 +451,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Returns:
 				;	NONE
 				; -----------------------------
+
  000001A6			ReadVal PROC
  000001A6  55				PUSH					EBP
  000001A7  8B EC			MOV						EBP, ESP
@@ -676,6 +694,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Returns:
 				;	NONE
 				; -----------------------------
+
  00000331			WriteVal PROC
  00000331  55				PUSH					EBP
  00000332  8B EC			MOV						EBP, ESP
@@ -759,6 +778,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
 				; Returns:
 				;	NONE
 				; -----------------------------
+
  00000399			Calculate PROC
  00000399  55				PUSH					EBP
  0000039A  8B EC			MOV						EBP, ESP
@@ -802,7 +822,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
  000003DE			Calculate ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 10:30:17
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
 2String Primitives and Macros    (Proj6_rostma.asm	     Symbols 2 - 1
 
 
@@ -1262,15 +1282,15 @@ WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 assignment . . . . . . . . . . .	Byte	 00000000 _DATA	
 author . . . . . . . . . . . . .	Byte	 0000003D _DATA	
-average  . . . . . . . . . . . .	DWord	 0000023A _DATA	
+average  . . . . . . . . . . . .	DWord	 00000285 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-comma  . . . . . . . . . . . . .	Byte	 00000237 _DATA	
-count  . . . . . . . . . . . . .	DWord	 0000020F _DATA	
+comma  . . . . . . . . . . . . .	Byte	 000001E3 _DATA	
+count  . . . . . . . . . . . . .	DWord	 00000281 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
-goodbye  . . . . . . . . . . . .	Byte	 00000279 _DATA	
+goodbye  . . . . . . . . . . . .	Byte	 0000021D _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 input_bad  . . . . . . . . . . .	Byte	 00000167 _DATA	
@@ -1279,7 +1299,7 @@ input_try_again  . . . . . . . .	Byte	 000001AC _DATA
 instruction_1  . . . . . . . . .	Byte	 00000056 _DATA	
 instruction_2  . . . . . . . . .	Byte	 00000081 _DATA	
 instruction_3  . . . . . . . . .	Byte	 000000ED _DATA	
-integers . . . . . . . . . . . .	DWord	 000001BF _DATA	
+integers . . . . . . . . . . . .	DWord	 00000231 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -1287,14 +1307,14 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-output_string  . . . . . . . . .	Byte	 00000213 _DATA	
+output_string  . . . . . . . . .	Byte	 000001BF _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-rounded_string . . . . . . . . .	Byte	 00000260 _DATA	
-string_count . . . . . . . . . .	DWord	 0000020B _DATA	
-string_output  . . . . . . . . .	Byte	 000001EB _DATA	
-string . . . . . . . . . . . . .	Byte	 000001CB _DATA	
-sum_string . . . . . . . . . . .	Byte	 0000023E _DATA	
-sum  . . . . . . . . . . . . . .	DWord	 0000025C _DATA	
+rounded_string . . . . . . . . .	Byte	 00000204 _DATA	
+string_count . . . . . . . . . .	DWord	 0000027D _DATA	
+string_output  . . . . . . . . .	Byte	 0000025D _DATA	
+string . . . . . . . . . . . . .	Byte	 0000023D _DATA	
+sum_string . . . . . . . . . . .	Byte	 000001E6 _DATA	
+sum  . . . . . . . . . . . . . .	DWord	 00000289 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
