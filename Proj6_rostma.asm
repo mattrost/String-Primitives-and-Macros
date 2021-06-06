@@ -1,7 +1,7 @@
 TITLE String Primitives and Macros    (Proj6_rostma.asm)
 
 ; Author: Matthew Rost
-; Last Modified: 6/5/2021
+; Last Modified: 6/6/2021
 ; OSU email address: rostma@oregonstate.edu
 ; Course number/section:   CS271 Section 400
 ; Project Number:                 Due Date: 6/6/2021
@@ -16,30 +16,57 @@ TITLE String Primitives and Macros    (Proj6_rostma.asm)
 
 INCLUDE Irvine32.inc
 
-; (insert macro definitions here)
+; ---------------------------------------------------------------------------------
+; Name: mGetString
+;
+; Prompts the user to input a string and stores the string.
+;
+; Preconditions:
+;
+; Receives:
+; prompt = string BYTE array
+; user_input = string BYTE array
+; input_length = DWORD length of inputted array
+;
+; Returns:
+; user_input = user inputted string
+; input_length = length of inputted string
+; ---------------------------------------------------------------------------------
+
 mGetString MACRO prompt, user_input, input_length
 
-	PUSH		EDX
-	PUSH		ECX
-	PUSH		EAX
+	PUSH					EDX
+	PUSH					ECX
+	PUSH					EAX
 
-	MOV			EDX, prompt
-	CALL		WriteString
+	mDisplayString			prompt
 
-	MOV			EDX, user_input
-	MOV			ECX, 10
+	MOV						EDX, user_input
+	MOV						ECX, HI
 
-	CALL		ReadString
-	MOV			input_length, EAX
+	CALL					ReadString
+	MOV						input_length, EAX
 
-	POP			EAX
-	POP			ECX
-	POP			EDX
+	POP						EAX
+	POP						ECX
+	POP						EDX
+
 ENDM
 
-; mMakeString
+; ---------------------------------------------------------------------------------
+; Name: mDisplayString
+;
+; Prints out a string.
+;
+; Preconditions:
+;
+; Receives:
+; string = string BYTE array
+;
+; Returns:
+; string = Prints out string array
+; ---------------------------------------------------------------------------------
 
-; mDisplayString based off of MacroDemo.asm from Module 8 - Exploration 2
 mDisplayString MACRO string
 	PUSH		EDX
 
@@ -50,8 +77,8 @@ mDisplayString MACRO string
 
 ENDM
 
-HI = 32
-NUMBER = 10 ; Number of integers to store
+HI = 16		; Used to set max size for string input
+NUMBER = 3 ; Number of integers to store
 
 .data
 
@@ -87,13 +114,13 @@ main PROC
 	PUSH					OFFSET assignment
 	CALL					Introduction
 
+	; Set counter to NUMBER and count to 0
 	MOV						ECX, NUMBER
 	MOV						EAX, 0
 	MOV						count, EAX
 
+	; Loop to get valid integers from user
 	_getValidStrings:
-		; Loop to get valid integers
-		; call ReadVal
 		PUSH					OFFSET string_count
 		PUSH					OFFSET count
 		PUSH					OFFSET string
@@ -102,13 +129,15 @@ main PROC
 		PUSH					OFFSET input_bad
 		PUSH					OFFSET input_prompt
 		CALL					ReadVal
-		ADD						count, 4
+		ADD						count, 4				; Tracks index
 		LOOP					_getValidStrings
 
+	; Calculate sum and average
 	PUSH					OFFSET integers
 	PUSH					OFFSET sum
 	PUSH					OFFSET average
 	CALL					Calculate
+
 
 	Call					Crlf
 	mDisplayString			OFFSET output_string
@@ -118,6 +147,7 @@ main PROC
 	MOV						count, EAX
 	MOV						ECX, NUMBER
 
+	; Loop to display the entered numbers as strings
 	_enteredNumbers:
 		MOV						string_output, 0
 		PUSH					OFFSET count
@@ -130,6 +160,7 @@ main PROC
 		mDisplayString			OFFSET comma
 		LOOP					_enteredNumbers
 
+	; Used for last number so it doesn't have a comma after it.
 	_enteredNumbersNoComma:
 		LOOP					_enteredNumbersNoComma
 		
@@ -139,6 +170,7 @@ main PROC
 	Call					Crlf
 	mDisplayString			OFFSET sum_string
 
+	; Display sum string
 	PUSH					OFFSET count
 	PUSH					OFFSET string_output
 	PUSH					OFFSET sum
@@ -148,6 +180,7 @@ main PROC
 	Call					Crlf
 	mDisplayString			OFFSET rounded_string		
 
+	; Display average string
 	PUSH					OFFSET count
 	PUSH					OFFSET string_output
 	PUSH					OFFSET average
@@ -236,6 +269,7 @@ ReadVal PROC
 	MOV						EDI, [EBP+20]
 	MOV						EAX, [EBP+28]
 	ADD						EDI, [EAX]		; Set to end of array of integers
+	MOV						ESI, [EBP+24]
 	MOV						EAX, 0
 	MOV						EBX, 0
 
@@ -248,12 +282,11 @@ ReadVal PROC
 		MOV						EAX, [EBP+32]
 		CMP						EAX, 1
 		JL						_badString
-		MOV						ESI, [EBP+24]
 		MOV						ECX, [EBP+32]
 		MOV						EAX, [EBP+32]
 		SUB						EAX, 1
 		MOV						[EBP+32], EAX
-		JMP						_verifyFirst 	; string contains >0 characters, time to verify if it has a + or - sign
+		JMP						_verifyCharacters 	; string contains >0 characters, time to verify if it has a + or - sign
 
 	_badString:
 
@@ -274,7 +307,31 @@ ReadVal PROC
 		MOV						EAX, 0
 		MOV						[EDI], EAX
 
+		JMP						_verifyCharacters
+
+	_verifyCharacters:
+		LODSB
+		CMP						AL, 57
+		JG						_badString
+		CMP						AL, 47
+		JL						_verifySign
+		LOOP					_verifyCharacters
+
+		MOV						ESI, [EBP+24]
+		MOV						ECX, [EBP+32]
+		ADD						ECX, 1
 		JMP						_verifyFirst
+
+	_verifySign:
+		CMP						AL, 45
+		JE						_nextCharacter
+		CMP						AL, 43
+		JE						_nextCharacter
+		JMP						_badString
+
+	_nextCharacter:
+		LOOP					_verifyCharacters					
+
 
 	_verifyFirst:
 		LODSB
@@ -337,7 +394,7 @@ ReadVal PROC
 	_multiplyNegative:
 		MOV						EBX, 10
 		MUL						EBX
-		JO						_badString
+		JO						_overflow
 		LOOP					_multiplyNegative
 		JMP						_addDigitNegative
 
