@@ -35,8 +35,8 @@ INCLUDE Irvine32.inc
 ; input_length = DWORD length of inputted array
 ;
 ; Returns:
-; user_input = user inputted string
-; input_length = length of inputted string
+;	user_input = user inputted string
+;	input_length = length of inputted string
 ; ---------------------------------------------------------------------------------
 
 mGetString MACRO prompt, user_input, input_length
@@ -73,11 +73,11 @@ ENDM
 ; Receives:
 ; string = string BYTE array
 ;
-; Returns:
-; string = Prints out string array
+; Returns: Prints out string array
 ; ---------------------------------------------------------------------------------
 
 mDisplayString MACRO string
+
 	PUSH		EDX
 
 	MOV			EDX, string
@@ -148,11 +148,12 @@ main PROC
 	PUSH					OFFSET average
 	CALL					Calculate
 
-
+	; Display message to show user that program will show the strings of integers
 	Call					Crlf
 	mDisplayString			OFFSET output_string
 	Call					Crlf
 
+	; Prepare for _enteredNumbers loop to show numbers
 	MOV						EAX, 0
 	MOV						count, EAX		; Set index counter to 0
 	MOV						ECX, NUMBER
@@ -217,11 +218,7 @@ main ENDP
 ;	For mDisplayString to work, the OFFSETs of the strings must be passed
 ;
 ; Postconditions:
-;	[ebp+8]		string displayed
-;	[ebp+12]	string displayed
-;	[ebp+16]	string displayed
-;	[ebp+20]	string displayed
-;	[ebp+24]	string displayed
+;	None
 ;
 ; Receives:
 ;	[ebp+8]			= assignment array
@@ -230,11 +227,11 @@ main ENDP
 ;	[ebp+20]		= instruction_2 array
 ;	[ebp+24]		= instruction_3 array
 ;
-; Returns:
-;	NONE
+; Returns: none
 ; -----------------------------
 
 Introduction PROC
+
 	PUSH					EBP
 	MOV						EBP, ESP
 	PUSH					EDX
@@ -264,10 +261,15 @@ Introduction ENDP
 ; -----------------------------
 ; Name: ReadVal
 ;
-; FILL THIS OUT
+; This procedure will call mGetString and prompt the user to input signed integer as a string.
+;	It will then verify that the string has no characters that aren't numbers in it, besides
+;	a leading + or - sign. If that test passes, then this will convert the string of the integer
+;	to the actual number and store it in an array. If the test fails, this will inform the user
+;	that the string entered was not acceptable and prompt for a new one. Once the procedure
+;	stores an acceptable integer, it will end the procedure.
 ;	
 ; Preconditions:
-;	FILL THIS OUT
+;	The array is a SDWORD
 ;
 ; Receives:
 ;	[ebp+8]			=  input_prompt string BYTE array
@@ -278,11 +280,11 @@ Introduction ENDP
 ;	[ebp+28]		=  count DWORD
 ;	[ebp+32]		=  string_count (length of string input) DWORD
 ;
-; Returns:
-;	NONE
+; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28]
 ; -----------------------------
 
 ReadVal PROC
+
 	PUSH					EBP
 	MOV						EBP, ESP
 	PUSH					EAX
@@ -299,8 +301,7 @@ ReadVal PROC
 	MOV						EAX, 0
 	MOV						EBX, 0
 
-	; Call macro to display the introduction and prompt strings
-
+	; Gets the input string from user. Then checks to see that it contains characters
 	_getString:
 		mGetString				[EBP+8], [EBP+24], [EBP+32]
 
@@ -315,7 +316,6 @@ ReadVal PROC
 		JMP						_verifyCharacters 	; string contains >0 characters, time to verify if it has a + or - sign
 
 	_badString:
-
 		mDisplayString			[EBP+12]
 		CALL					Crlf
 
@@ -335,19 +335,22 @@ ReadVal PROC
 
 		JMP						_verifyCharacters
 
+	; Verifies that all of the characters within the string are valid for an integer
 	_verifyCharacters:
 		LODSB
 		CMP						AL, 57
-		JG						_badString
-		CMP						AL, 47
+		JG						_badString				; Character is greater than 9
+		CMP						AL, 47					; Character is less than 0
 		JL						_verifySign
 		LOOP					_verifyCharacters
 
+		; Characters are all good, time to iterate thru the string
 		MOV						ESI, [EBP+24]
 		MOV						ECX, [EBP+32]
 		ADD						ECX, 1
 		JMP						_verifyFirst
 
+	; Verify if character that isn't a number is a + or - sign
 	_verifySign:
 		CMP						AL, 45
 		JE						_nextCharacter
@@ -355,10 +358,11 @@ ReadVal PROC
 		JE						_nextCharacter
 		JMP						_badString
 
+	; Loop back to _verifyCharacters from _verifySign
 	_nextCharacter:
 		LOOP					_verifyCharacters					
 
-
+	; Determine if the string has a leading + or - sign
 	_verifyFirst:
 		LODSB
 		CMP						AL, 45
@@ -368,6 +372,7 @@ ReadVal PROC
 		MOV						ESI, [EBP+24]
 		JMP						_verifyString
 
+	; String has a leading - sign, move to next character and then go to _verifyStringNegative
 	_negative:
 		SUB						ECX, 1
 		MOV						EAX, [EBP+32]
@@ -375,6 +380,7 @@ ReadVal PROC
 		MOV						[EBP+32], EAX
 		JMP						_verifyStringNegative
 
+	; String has a leading + sign, move to next character and then go to _verifyString
 	_positive:
 		SUB						ECX, 1
 		MOV						EAX, [EBP+32]
@@ -382,6 +388,7 @@ ReadVal PROC
 		MOV						[EBP+32], EAX
 		JMP						_verifyString
 
+	; Load each byte and convert it to an integer.
 	_verifyString:
 		LODSB
 		CMP						AL, 48
@@ -390,19 +397,21 @@ ReadVal PROC
 		JG						_badString
 		SUB						EAX, 48
 
-		PUSH					ECX
-		MOV						ECX, [EBP+32]
+		PUSH					ECX					; Store this because _multiply loop uses ECX
+		MOV						ECX, [EBP+32]		; Multiply the number by 10 until it lines up with string
 		CMP						ECX, 0
 		JG						_multiply
 		JMP						_addDigit
 
+	; convert the integer to its place in the number by multiplying by 10 
 	_multiply:
 		MOV						EBX, 10
 		MUL						EBX
-		JO						_overflow
+		JO						_overflow			; Number too large
 		LOOP					_multiply
 		JMP						_addDigit
 
+	; Load each byte and convert it to an integer.
 	_verifyStringNegative:
 		LODSB
 		CMP						AL, 48
@@ -411,68 +420,68 @@ ReadVal PROC
 		JG						_badString
 		SUB						EAX, 48
 
-		PUSH					ECX
-		MOV						ECX, [EBP+32]
+		PUSH					ECX					; Store this because _multiplyNegative loop uses ECX
+		MOV						ECX, [EBP+32]		; Multiply the number by 10 until it lines up with string
 		CMP						ECX, 0
 		JG						_multiplyNegative
 		JMP						_addDigitNegative
 
+	; convert the integer to its place in the number by multiplying by 10 
 	_multiplyNegative:
 		MOV						EBX, 10
 		MUL						EBX
-		JO						_overflow
+		JO						_overflow			; Number too small
 		LOOP					_multiplyNegative
 		JMP						_addDigitNegative
 
+	; Adds together the current byte (multipled to the place it goes to) with the rolling results. For positive int
 	_addDigit:
-		MOV						EBX, [EDI]
-		ADD						EAX, EBX
+		MOV						EBX, [EDI]			
+		ADD						EAX, EBX			; Add multiplied number to rolling total
 		JO						_overflow
-		MOV						[EDI], EAX
+		MOV						[EDI], EAX			; Save over the rolling total
 		MOV						EAX, [EBP+32]
 		SUB						EAX, 1
 		MOV						[EBP+32], EAX
-		POP						ECX
+		POP						ECX					; Pop ECX, this was pushed in _verifyString
 		LOOP					_verifyString
 		JMP						_end
 
+	; Adds together the current byte (multipled to the place it goes to) with the rolling results. For negative int
 	_addDigitNegative:
 		MOV						EBX, [EDI]
-		ADD						EAX, EBX
+		ADD						EAX, EBX			; Add multiplied number to rolling total
 		JO						_overflow
 		MOV						[EDI], EAX
-		MOV						EAX, [EBP+32]
+		MOV						EAX, [EBP+32]		; Save over the rolling total
 		SUB						EAX, 1
 		MOV						[EBP+32], EAX
-		POP						ECX
+		POP						ECX					; Pop ECX, this was pushed in _verifyStringNegative
 		LOOP					_verifyStringNegative
 
 		MOV						EBX, [EDI]
-		NEG						EBX
+		NEG						EBX					; Convert from positive to negative int
 		MOV						[EDI], EBX
 
 		JMP						_end
 
+	; Overflow triggered by multiplication. Must pop ECX since that was pushed in _verifyString or _verifyStringNegative
 	_overflow:
 		POP						ECX
 		JMP						_badString
 
-		; check for any non number chars (except for minus and plus at start)
-
-		
+	; Pop all registers and return to main
 	_end:
-
-	POP						ESI
-	POP						EDI
-	POP						EDX
-	POP						ECX
-	POP						EBP
-	POP						EAX
-	POP						EBP
-	RET						28
+		POP						ESI
+		POP						EDI
+		POP						EDX
+		POP						ECX
+		POP						EBP
+		POP						EAX
+		POP						EBP
+		RET						28
 
 ReadVal ENDP
-
 
 ; -----------------------------
 ; Name: WriteVal
@@ -494,6 +503,7 @@ ReadVal ENDP
 ; -----------------------------
 
 WriteVal PROC
+
 	PUSH					EBP
 	MOV						EBP, ESP
 	PUSH					ESI
@@ -574,6 +584,7 @@ WriteVal ENDP
 ; -----------------------------
 
 Calculate PROC
+
 	PUSH					EBP
 	MOV						EBP, ESP
 	PUSH					EAX
@@ -587,6 +598,7 @@ Calculate PROC
 	MOV						EDX, 0					; Counts the amount of digits
 	MOV						EDI, [EBP+12]
 
+	; Loop over the array adding together each integer
 	_sum:
 		MOV						EAX, [EDI]
 		MOV						EBX, [ESI]
@@ -596,6 +608,7 @@ Calculate PROC
 		ADD						EDX, 1
 		LOOP					_sum
 
+	; Calculate the average by dividing the sum by the size of the array
 	MOV						ESI, [EBP+12]
 	MOV						EAX, [ESI]
 	MOV						EBX, EDX

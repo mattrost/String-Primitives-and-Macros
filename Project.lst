@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 2String Primitives and Macros    (Proj6_rostma.asm	     Page 1 - 1
 
 
@@ -56,8 +56,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				; input_length = DWORD length of inputted array
 				;
 				; Returns:
-				; user_input = user inputted string
-				; input_length = length of inputted string
+				;	user_input = user inputted string
+				;	input_length = length of inputted string
 				; ---------------------------------------------------------------------------------
 
 				mGetString MACRO prompt, user_input, input_length
@@ -94,11 +94,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				; Receives:
 				; string = string BYTE array
 				;
-				; Returns:
-				; string = Prints out string array
+				; Returns: Prints out string array
 				; ---------------------------------------------------------------------------------
 
 				mDisplayString MACRO string
+
 					PUSH		EDX
 
 					MOV			EDX, string
@@ -280,7 +280,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000068  68 00000285 R		PUSH					OFFSET average
  0000006D  E8 00000327			CALL					Calculate
 
-
+					; Display message to show user that program will show the strings of integers
  00000072  E8 00000000 E		Call					Crlf
 					mDisplayString			OFFSET output_string
  00000077  52		     1		PUSH		EDX
@@ -289,6 +289,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000082  5A		     1		POP			EDX
  00000083  E8 00000000 E		Call					Crlf
 
+					; Prepare for _enteredNumbers loop to show numbers
  00000088  B8 00000000			MOV						EAX, 0
  0000008D  A3 00000281 R		MOV						count, EAX		; Set index counter to 0
  00000092  B9 00000003			MOV						ECX, NUMBER
@@ -375,11 +376,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				;	For mDisplayString to work, the OFFSETs of the strings must be passed
 				;
 				; Postconditions:
-				;	[ebp+8]		string displayed
-				;	[ebp+12]	string displayed
-				;	[ebp+16]	string displayed
-				;	[ebp+20]	string displayed
-				;	[ebp+24]	string displayed
+				;	None
 				;
 				; Receives:
 				;	[ebp+8]			= assignment array
@@ -388,16 +385,16 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				;	[ebp+20]		= instruction_2 array
 				;	[ebp+24]		= instruction_3 array
 				;
-				; Returns:
-				;	NONE
+				; Returns: none
 				; -----------------------------
 
  00000148			Introduction PROC
+
  00000148  55				PUSH					EBP
  00000149  8B EC			MOV						EBP, ESP
  0000014B  52				PUSH					EDX
 
-					; Call macro to display the introduction
+					; Call macro to display the introduction and authoer
 					mDisplayString			[EBP+8]
  0000014C  52		     1		PUSH		EDX
  0000014D  8B 55 08	     1		MOV			EDX, [EBP+8]
@@ -442,10 +439,15 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				; -----------------------------
 				; Name: ReadVal
 				;
-				; FILL THIS OUT
+				; This procedure will call mGetString and prompt the user to input signed integer as a string.
+				;	It will then verify that the string has no characters that aren't numbers in it, besides
+				;	a leading + or - sign. If that test passes, then this will convert the string of the integer
+				;	to the actual number and store it in an array. If the test fails, this will inform the user
+				;	that the string entered was not acceptable and prompt for a new one. Once the procedure
+				;	stores an acceptable integer, it will end the procedure.
 				;	
 				; Preconditions:
-				;	FILL THIS OUT
+				;	The array is a SDWORD
 				;
 				; Receives:
 				;	[ebp+8]			=  input_prompt string BYTE array
@@ -456,11 +458,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				;	[ebp+28]		=  count DWORD
 				;	[ebp+32]		=  string_count (length of string input) DWORD
 				;
-				; Returns:
-				;	NONE
+				; Returns: stores the converted string to integer to [ebp+20] at the index stored at [ebp+28]
 				; -----------------------------
 
  000001A6			ReadVal PROC
+
  000001A6  55				PUSH					EBP
  000001A7  8B EC			MOV						EBP, ESP
  000001A9  50				PUSH					EAX
@@ -477,8 +479,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  000001BA  B8 00000000			MOV						EAX, 0
  000001BF  BB 00000000			MOV						EBX, 0
 
-					; Call macro to display the introduction and prompt strings
-
+					; Gets the input string from user. Then checks to see that it contains characters
  000001C4				_getString:
 						mGetString				[EBP+8], [EBP+24], [EBP+32]
  000001C4  52		     1		PUSH					EDX
@@ -507,7 +508,6 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  000001F8  EB 51				JMP						_verifyCharacters 	; string contains >0 characters, time to verify if it has a + or - sign
 
  000001FA				_badString:
-
 						mDisplayString			[EBP+12]
  000001FA  52		     1		PUSH		EDX
  000001FB  8B 55 0C	     1		MOV			EDX, [EBP+12]
@@ -545,19 +545,22 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 
  00000249  EB 00				JMP						_verifyCharacters
 
+					; Verifies that all of the characters within the string are valid for an integer
  0000024B				_verifyCharacters:
  0000024B  AC					LODSB
  0000024C  3C 39				CMP						AL, 57
- 0000024E  7F AA				JG						_badString
- 00000250  3C 2F				CMP						AL, 47
+ 0000024E  7F AA				JG						_badString				; Character is greater than 9
+ 00000250  3C 2F				CMP						AL, 47					; Character is less than 0
  00000252  7C 0D				JL						_verifySign
  00000254  E2 F5				LOOP					_verifyCharacters
 
+						; Characters are all good, time to iterate thru the string
  00000256  8B 75 18				MOV						ESI, [EBP+24]
  00000259  8B 4D 20				MOV						ECX, [EBP+32]
  0000025C  83 C1 01				ADD						ECX, 1
  0000025F  EB 0C				JMP						_verifyFirst
 
+					; Verify if character that isn't a number is a + or - sign
  00000261				_verifySign:
  00000261  3C 2D				CMP						AL, 45
  00000263  74 06				JE						_nextCharacter
@@ -565,10 +568,11 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000267  74 02				JE						_nextCharacter
  00000269  EB 8F				JMP						_badString
 
+					; Loop back to _verifyCharacters from _verifySign
  0000026B				_nextCharacter:
  0000026B  E2 DE				LOOP					_verifyCharacters					
 
-
+					; Determine if the string has a leading + or - sign
  0000026D				_verifyFirst:
  0000026D  AC					LODSB
  0000026E  3C 2D				CMP						AL, 45
@@ -578,6 +582,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000276  8B 75 18				MOV						ESI, [EBP+24]
  00000279  EB 1C				JMP						_verifyString
 
+					; String has a leading - sign, move to next character and then go to _verifyStringNegative
  0000027B				_negative:
  0000027B  83 E9 01				SUB						ECX, 1
  0000027E  8B 45 20				MOV						EAX, [EBP+32]
@@ -585,6 +590,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000284  89 45 20				MOV						[EBP+32], EAX
  00000287  EB 3A				JMP						_verifyStringNegative
 
+					; String has a leading + sign, move to next character and then go to _verifyString
  00000289				_positive:
  00000289  83 E9 01				SUB						ECX, 1
  0000028C  8B 45 20				MOV						EAX, [EBP+32]
@@ -592,6 +598,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000292  89 45 20				MOV						[EBP+32], EAX
  00000295  EB 00				JMP						_verifyString
 
+					; Load each byte and convert it to an integer.
  00000297				_verifyString:
  00000297  AC					LODSB
  00000298  3C 30				CMP						AL, 48
@@ -600,19 +607,21 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  000002A2  0F 8F FFFFFF52			JG						_badString
  000002A8  83 E8 30				SUB						EAX, 48
 
- 000002AB  51					PUSH					ECX
- 000002AC  8B 4D 20				MOV						ECX, [EBP+32]
+ 000002AB  51					PUSH					ECX					; Store this because _multiply loop uses ECX
+ 000002AC  8B 4D 20				MOV						ECX, [EBP+32]		; Multiply the number by 10 until it lines up with string
  000002AF  83 F9 00				CMP						ECX, 0
  000002B2  7F 02				JG						_multiply
  000002B4  EB 39				JMP						_addDigit
 
+					; convert the integer to its place in the number by multiplying by 10 
  000002B6				_multiply:
  000002B6  BB 0000000A				MOV						EBX, 10
  000002BB  F7 E3				MUL						EBX
- 000002BD  70 62				JO						_overflow
+ 000002BD  70 62				JO						_overflow			; Number too large
  000002BF  E2 F5				LOOP					_multiply
  000002C1  EB 2C				JMP						_addDigit
 
+					; Load each byte and convert it to an integer.
  000002C3				_verifyStringNegative:
  000002C3  AC					LODSB
  000002C4  3C 30				CMP						AL, 48
@@ -621,65 +630,66 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  000002CE  0F 8F FFFFFF26			JG						_badString
  000002D4  83 E8 30				SUB						EAX, 48
 
- 000002D7  51					PUSH					ECX
- 000002D8  8B 4D 20				MOV						ECX, [EBP+32]
+ 000002D7  51					PUSH					ECX					; Store this because _multiplyNegative loop uses ECX
+ 000002D8  8B 4D 20				MOV						ECX, [EBP+32]		; Multiply the number by 10 until it lines up with string
  000002DB  83 F9 00				CMP						ECX, 0
  000002DE  7F 02				JG						_multiplyNegative
  000002E0  EB 23				JMP						_addDigitNegative
 
+					; convert the integer to its place in the number by multiplying by 10 
  000002E2				_multiplyNegative:
  000002E2  BB 0000000A				MOV						EBX, 10
  000002E7  F7 E3				MUL						EBX
- 000002E9  70 36				JO						_overflow
+ 000002E9  70 36				JO						_overflow			; Number too small
  000002EB  E2 F5				LOOP					_multiplyNegative
  000002ED  EB 16				JMP						_addDigitNegative
 
+					; Adds together the current byte (multipled to the place it goes to) with the rolling results. For positive int
  000002EF				_addDigit:
- 000002EF  8B 1F				MOV						EBX, [EDI]
- 000002F1  03 C3				ADD						EAX, EBX
+ 000002EF  8B 1F				MOV						EBX, [EDI]			
+ 000002F1  03 C3				ADD						EAX, EBX			; Add multiplied number to rolling total
  000002F3  70 2C				JO						_overflow
- 000002F5  89 07				MOV						[EDI], EAX
+ 000002F5  89 07				MOV						[EDI], EAX			; Save over the rolling total
  000002F7  8B 45 20				MOV						EAX, [EBP+32]
  000002FA  83 E8 01				SUB						EAX, 1
  000002FD  89 45 20				MOV						[EBP+32], EAX
- 00000300  59					POP						ECX
+ 00000300  59					POP						ECX					; Pop ECX, this was pushed in _verifyString
  00000301  E2 94				LOOP					_verifyString
  00000303  EB 22				JMP						_end
 
+					; Adds together the current byte (multipled to the place it goes to) with the rolling results. For negative int
  00000305				_addDigitNegative:
  00000305  8B 1F				MOV						EBX, [EDI]
- 00000307  03 C3				ADD						EAX, EBX
+ 00000307  03 C3				ADD						EAX, EBX			; Add multiplied number to rolling total
  00000309  70 16				JO						_overflow
  0000030B  89 07				MOV						[EDI], EAX
- 0000030D  8B 45 20				MOV						EAX, [EBP+32]
+ 0000030D  8B 45 20				MOV						EAX, [EBP+32]		; Save over the rolling total
  00000310  83 E8 01				SUB						EAX, 1
  00000313  89 45 20				MOV						[EBP+32], EAX
- 00000316  59					POP						ECX
+ 00000316  59					POP						ECX					; Pop ECX, this was pushed in _verifyStringNegative
  00000317  E2 AA				LOOP					_verifyStringNegative
 
  00000319  8B 1F				MOV						EBX, [EDI]
- 0000031B  F7 DB				NEG						EBX
+ 0000031B  F7 DB				NEG						EBX					; Convert from positive to negative int
  0000031D  89 1F				MOV						[EDI], EBX
 
  0000031F  EB 06				JMP						_end
 
+					; Overflow triggered by multiplication. Must pop ECX since that was pushed in _verifyString or _verifyStringNegative
  00000321				_overflow:
  00000321  59					POP						ECX
  00000322  E9 FFFFFED3				JMP						_badString
 
-						; check for any non number chars (except for minus and plus at start)
-
-						
+					; Pop all registers and return to main
  00000327				_end:
-
- 00000327  5E				POP						ESI
- 00000328  5F				POP						EDI
- 00000329  5A				POP						EDX
- 0000032A  59				POP						ECX
- 0000032B  5D				POP						EBP
- 0000032C  58				POP						EAX
- 0000032D  5D				POP						EBP
- 0000032E  C2 001C			RET						28
+ 00000327  5E					POP						ESI
+ 00000328  5F					POP						EDI
+ 00000329  5A					POP						EDX
+ 0000032A  59					POP						ECX
+ 0000032B  5D					POP						EBP
+ 0000032C  58					POP						EAX
+ 0000032D  5D					POP						EBP
+ 0000032E  C2 001C				RET						28
 
  00000331			ReadVal ENDP
 
@@ -704,6 +714,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				; -----------------------------
 
  00000331			WriteVal PROC
+
  00000331  55				PUSH					EBP
  00000332  8B EC			MOV						EBP, ESP
  00000334  56				PUSH					ESI
@@ -720,7 +731,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  00000349  8B 06			MOV						EAX, [ESI]
  0000034B  83 F8 00			CMP						EAX, 0
  0000034E  7D 0E			JGE						_printArray
- 00000350  F7 D8	NEG						EAX
+ 00000350  F7 D8			NEG						EAX
  00000352  8B D8			MOV						EBX, EAX
  00000354  B8 0000002D			MOV						EAX, 45
  00000359  AA				STOSB									; Add a minus sign on for negative integers
@@ -788,6 +799,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 				; -----------------------------
 
  00000399			Calculate PROC
+
  00000399  55				PUSH					EBP
  0000039A  8B EC			MOV						EBP, ESP
  0000039C  50				PUSH					EAX
@@ -830,7 +842,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
  000003DE			Calculate ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 13:39:38
 2String Primitives and Macros    (Proj6_rostma.asm	     Symbols 2 - 1
 
 
