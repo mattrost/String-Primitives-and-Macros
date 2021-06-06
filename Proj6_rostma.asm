@@ -239,19 +239,18 @@ Introduction PROC
 	MOV						EBP, ESP
 	PUSH					EDX
 
-	; Call macro to display the introduction and prompt strings
+	; Call macro to display the introduction and authoer
 	mDisplayString			[EBP+8]
 	CALL					Crlf
 	mDisplayString			[EBP+12]
 	CALL					Crlf
 	CALL					Crlf
 
+	; Call macro to display the prompt strings
 	mDisplayString			[EBP+16]
 	CALL					Crlf
-
 	mDisplayString			[EBP+20]
 	CALL					Crlf
-
 	mDisplayString			[EBP+24]
 	CALL					Crlf
 	CALL					Crlf

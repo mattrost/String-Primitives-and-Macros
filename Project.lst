@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 2String Primitives and Macros    (Proj6_rostma.asm	     Page 1 - 1
 
 
@@ -366,14 +366,20 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
 				; -----------------------------
 				; Name: Introduction
 				;
-				; This section will display an introduction and a program description to the user. It tells the
-				;	user that the program will make a random array of 200 numbers between 10 and 29, sort the array
-				;	calculate the median, count each time an integer is in the array, and then print the original array,
-				;	sorted array, median, integer count array. This is all done with string arrays that contain the
-				;	description.
+				; This section will display an introduction and a program description to the user. It asks the
+				;	user to input 10 signed decimal integers. It also tells them that after they have finished
+				;	inputting the numbers, the program will display a list of the integers, their sum, and their
+				;	average value.
 				;	
 				; Preconditions:
-				;	FILL THIS OUT
+				;	For mDisplayString to work, the OFFSETs of the strings must be passed
+				;
+				; Postconditions:
+				;	[ebp+8]		string displayed
+				;	[ebp+12]	string displayed
+				;	[ebp+16]	string displayed
+				;	[ebp+20]	string displayed
+				;	[ebp+24]	string displayed
 				;
 				; Receives:
 				;	[ebp+8]			= assignment array
@@ -391,7 +397,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
  00000149  8B EC			MOV						EBP, ESP
  0000014B  52				PUSH					EDX
 
-					; Call macro to display the introduction and prompt strings
+					; Call macro to display the introduction
 					mDisplayString			[EBP+8]
  0000014C  52		     1		PUSH		EDX
  0000014D  8B 55 08	     1		MOV			EDX, [EBP+8]
@@ -405,6 +411,8 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
  00000164  5A		     1		POP			EDX
  00000165  E8 00000000 E		CALL					Crlf
  0000016A  E8 00000000 E		CALL					Crlf
+
+					; Call macro to display the prompt strings
 					mDisplayString			[EBP+16]
  0000016F  52		     1		PUSH		EDX
  00000170  8B 55 10	     1		MOV			EDX, [EBP+16]
@@ -712,7 +720,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
  00000349  8B 06			MOV						EAX, [ESI]
  0000034B  83 F8 00			CMP						EAX, 0
  0000034E  7D 0E			JGE						_printArray
- 00000350  F7 D8			NEG						EAX
+ 00000350  F7 D8	NEG						EAX
  00000352  8B D8			MOV						EBX, EAX
  00000354  B8 0000002D			MOV						EAX, 45
  00000359  AA				STOSB									; Add a minus sign on for negative integers
@@ -822,7 +830,7 @@ Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
  000003DE			Calculate ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:35:12
+Microsoft (R) Macro Assembler Version 14.28.29915.0	    06/06/21 11:54:17
 2String Primitives and Macros    (Proj6_rostma.asm	     Symbols 2 - 1
 
 
